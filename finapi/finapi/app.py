@@ -1,9 +1,9 @@
 """Flask application exposing stock price endpoints."""
-from finapi.db import SessionLocal, init_db
-from finapi.models import PriceRecord, NewsItem
 
 from flask import Flask, jsonify, request
 
+from finapi.db import SessionLocal, init_db
+from finapi.models import PriceRecord, NewsItem
 from finapi.prices import (
     TickerNotFoundError,
     get_latest_price,
@@ -25,15 +25,9 @@ def create_app() -> Flask:
         try:
             latest = get_latest_price(ticker)
         except TickerNotFoundError as e:
-            return jsonify({
-                "error": str(e),
-                "code": 404,
-            }), 404
+            return jsonify({"error": str(e), "code": 404}), 404
         except Exception:
-            return jsonify({
-                "error": "Erreur interne",
-                "code": 500,
-            }), 500
+            return jsonify({"error": "Erreur interne", "code": 500}), 500
 
         return jsonify({
             "ticker": latest.ticker,
@@ -44,7 +38,6 @@ def create_app() -> Flask:
 
     @app.get("/history/<ticker>")
     def history(ticker: str):
-
         raw_days = request.args.get("days", "30")
 
         try:
@@ -64,29 +57,20 @@ def create_app() -> Flask:
         try:
             points = get_history(ticker, days)
         except TickerNotFoundError as e:
-            return jsonify({
-                "error": str(e),
-                "code": 404,
-            }), 404
+            return jsonify({"error": str(e), "code": 404}), 404
         except Exception:
-            return jsonify({
-                "error": "Erreur interne",
-                "code": 500,
-            }), 500
+            return jsonify({"error": "Erreur interne", "code": 500}), 500
 
         return jsonify({
             "ticker": ticker.upper(),
             "days_requested": days,
             "prices": [
-                {
-                    "date": p.date.isoformat(),
-                    "close": p.close,
-                }
+                {"date": p.date.isoformat(), "close": p.close}
                 for p in points
             ],
         })
 
-        @app.get("/db/prices/<ticker>")
+    @app.get("/db/prices/<ticker>")
     def db_prices(ticker: str):
         with SessionLocal() as session:
             rows = (
