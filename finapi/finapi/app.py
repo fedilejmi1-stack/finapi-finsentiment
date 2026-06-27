@@ -1,7 +1,8 @@
-"""Flask application exposing stock price endpoints."""
+"""Flask application exposing stock price, database and sentiment endpoints."""
 
 from flask import Flask, jsonify, request
 
+from finapi.sentiment import analyze_sentiment, analyze_batch
 from finapi.db import SessionLocal, init_db
 from finapi.models import PriceRecord, NewsItem
 from finapi.prices import (
@@ -65,7 +66,10 @@ def create_app() -> Flask:
             "ticker": ticker.upper(),
             "days_requested": days,
             "prices": [
-                {"date": p.date.isoformat(), "close": p.close}
+                {
+                    "date": p.date.isoformat(),
+                    "close": p.close,
+                }
                 for p in points
             ],
         })
@@ -85,7 +89,10 @@ def create_app() -> Flask:
             "ticker": ticker.upper(),
             "count": len(rows),
             "prices": [
-                {"date": r.date.isoformat(), "close": r.close}
+                {
+                    "date": r.date.isoformat(),
+                    "close": r.close,
+                }
                 for r in rows
             ],
         })
@@ -114,6 +121,57 @@ def create_app() -> Flask:
                 for r in rows
             ],
         })
+
+    @app.post("/sentiment")
+    def sentiment():
+        data = request.get_json(silent=True)
+
+        if not data or "text" not in data:
+            return jsonify({
+                "error": "Missing 'text' field",
+                "code": 400,
+            }), 400
+
+        result = analyze_sentiment(data["text"])
+
+        return jsonify(result), 200
+
+    @app.post("/sentiment/batch")
+    def sentiment_batch():
+        data = request.get_json(silent=True)
+
+        if not data or "texts" not in data:
+            return jsonify({
+                "error": "Missing 'texts' field",
+                "code": 400,
+            }), 400
+
+        texts = data["texts"]
+
+        if not isinstance(texts, list):
+            return jsonify({
+                "error": "'texts' must be a list",
+                "code": 400,
+            }), 400
+
+        if len(texts) == 0:
+            return jsonify({
+                "error": "'texts' cannot be empty",
+                "code": 400,
+            }), 400
+
+        if len(texts) > 100:
+            return jsonify({
+                "error": "Maximum 100 texts per request",
+                "code": 400,
+            }), 400
+
+        results = analyze_batch(texts)
+
+        return jsonify({
+            "count": len(results),
+            "results": results,
+        }), 200
 
     return app
 

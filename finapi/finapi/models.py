@@ -1,5 +1,6 @@
 """Modèles SQLAlchemy : prix et news."""
 
+from datetime import date , datetime
 from sqlalchemy import (
     Column,
     Integer,
@@ -37,3 +38,4 @@ class NewsItem(Base):
     publisher = Column(String(128))
     url = Column(String(1024), unique=True)
     summary = Column(String(2048))
+    
