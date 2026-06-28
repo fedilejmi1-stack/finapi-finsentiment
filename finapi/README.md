@@ -39,6 +39,17 @@ A Flask-based financial API that provides stock prices, historical data, news in
 * Colored news list by sentiment
 * Cached API calls using `@st.cache_data`
 
+### Lab 5
+
+* Automated tests with pytest
+* Coverage reporting with pytest-cov
+* Ruff linting and formatting
+* GitHub Actions CI workflow
+* CI badge in README
+* Pull Request workflow
+
+---
+
 ---
 
 # Installation
