@@ -1,3 +1,15 @@
+---
+title: FinSentiment
+emoji: 📈
+colorFrom: blue
+colorTo: yellow
+sdk: streamlit
+sdk_version: 1.30.0
+app_file: app.py
+pinned: false
+license: mit
+---
+
 # FinAPI
 ![CI](https://github.com/fedilejmi1-stack/finapi-finsentiment/actions/workflows/ci.yml/badge.svg)
 

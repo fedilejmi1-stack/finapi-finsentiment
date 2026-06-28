@@ -1,48 +1,111 @@
-"""Client HTTP for the Flask FinAPI."""
+"""Embedded backend client for Hugging Face Spaces deployment.
 
-from typing import Any
+Instead of calling the Flask API over HTTP, the Streamlit dashboard
+queries the database directly. This keeps the deployment single-process.
+"""
 
-import requests
+from sqlalchemy import func
 
-API_BASE = "http://127.0.0.1:5000"
-
-
-class APIError(Exception):
-    """Custom error for API calls."""
-
-    pass
-
-
-def _get(path: str, **params) -> dict[str, Any]:
-    try:
-        response = requests.get(
-            f"{API_BASE}{path}",
-            params=params,
-            timeout=10,
-        )
-    except requests.RequestException as e:
-        raise APIError(f"API unreachable: {e}") from e
-
-    if response.status_code != 200:
-        raise APIError(f"{response.status_code}: {response.text[:200]}")
-
-    return response.json()
+from finapi.db import SessionLocal, init_db
+from finapi.models import NewsItem, PriceRecord
 
 
 def get_health() -> bool:
+    """Return True when the embedded backend is available."""
     try:
-        return _get("/health").get("status") == "ok"
-    except APIError:
+        init_db()
+        return True
+    except Exception:
         return False
 
 
+def get_db_stats() -> dict:
+    """Return basic database statistics."""
+    init_db()
+
+    with SessionLocal() as session:
+        prices_count = session.query(PriceRecord).count()
+        news_count = session.query(NewsItem).count()
+        news_enriched = (
+            session.query(NewsItem)
+            .filter(NewsItem.sentiment_label.isnot(None))
+            .count()
+        )
+
+        tickers = sorted({
+            ticker
+            for (ticker,) in session.query(PriceRecord.ticker).distinct().all()
+        })
+
+    return {
+        "prices_count": prices_count,
+        "news_count": news_count,
+        "news_enriched": news_enriched,
+        "tickers": tickers,
+    }
+
+
 def get_db_prices(ticker: str) -> list[dict]:
-    return _get(f"/db/prices/{ticker}").get("prices", [])
+    """Return latest stored prices for a ticker."""
+    init_db()
+
+    with SessionLocal() as session:
+        rows = (
+            session.query(PriceRecord)
+            .filter(PriceRecord.ticker == ticker.upper())
+            .order_by(PriceRecord.date.desc())
+            .limit(100)
+            .all()
+        )
+
+    return [
+        {
+            "date": row.date.isoformat(),
+            "close": row.close,
+            "currency": row.currency,
+        }
+        for row in rows
+    ]
 
 
 def get_db_news(ticker: str) -> list[dict]:
-    return _get(f"/db/news/{ticker}").get("news", [])
+    """Return latest stored news for a ticker."""
+    init_db()
+
+    with SessionLocal() as session:
+        rows = (
+            session.query(NewsItem)
+            .filter(NewsItem.ticker == ticker.upper())
+            .order_by(NewsItem.published_at.desc())
+            .limit(20)
+            .all()
+        )
+
+    return [
+        {
+            "published_at": row.published_at.isoformat(),
+            "title": row.title,
+            "publisher": row.publisher,
+            "url": row.url,
+            "summary": row.summary,
+            "sentiment_label": row.sentiment_label,
+            "sentiment_score": row.sentiment_score,
+        }
+        for row in rows
+    ]
 
 
 def get_sentiment_summary(ticker: str) -> dict[str, int]:
-    return _get(f"/db/sentiment-summary/{ticker}").get("summary", {})
+    """Return sentiment distribution for a ticker."""
+    init_db()
+
+    with SessionLocal() as session:
+        rows = (
+            session.query(NewsItem.sentiment_label, func.count(NewsItem.id))
+            .filter(NewsItem.ticker == ticker.upper())
+            .filter(NewsItem.sentiment_label.isnot(None))
+            .group_by(NewsItem.sentiment_label)
+            .all()
+        )
+
+    return {label: count for label, count in rows}
