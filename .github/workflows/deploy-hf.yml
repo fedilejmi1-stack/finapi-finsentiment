@@ -10,8 +10,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Check HF token
         env:
@@ -23,17 +21,27 @@ jobs:
           fi
           echo "HF_TOKEN is available"
 
-      - name: Configure Git
+      - name: Build clean Space repository
         run: |
-          git config user.email "ci@finapi.dev"
-          git config user.name "GitHub Actions"
+          mkdir hf-space
+          cp -r finapi/app.py hf-space/
+          cp -r finapi/Dockerfile hf-space/
+          cp -r finapi/README.md hf-space/
+          cp -r finapi/requirements.txt hf-space/
+          cp -r finapi/dashboard hf-space/
+          cp -r finapi/finapi hf-space/
+          cp -r finapi/scripts hf-space/
+          cp -r finapi/pyproject.toml hf-space/
 
-      - name: Create Space branch from finapi folder
-        run: |
-          git subtree split --prefix=finapi -b hf-deploy
-
-      - name: Push to Hugging Face Space
+      - name: Push clean repository to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git push --force https://oauth2:${HF_TOKEN}@huggingface.co/spaces/FediLejmi1/finsentiment hf-deploy:main
+          cd hf-space
+          git init
+          git config user.email "ci@finapi.dev"
+          git config user.name "GitHub Actions"
+          git add .
+          git commit -m "Deploy clean Hugging Face Space"
+          git branch -M main
+          git push --force https://oauth2:${HF_TOKEN}@huggingface.co/spaces/FediLejmi1/finsentiment main
