@@ -38,4 +38,5 @@ class NewsItem(Base):
     publisher = Column(String(128))
     url = Column(String(1024), unique=True)
     summary = Column(String(2048))
-    
+    sentiment_label = Column(String(16), nullable=True)
+    sentiment_score = Column(Float, nullable=True)

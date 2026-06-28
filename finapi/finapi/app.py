@@ -1,6 +1,7 @@
 """Flask application exposing stock price, database and sentiment endpoints."""
 
 from flask import Flask, jsonify, request
+from sqlalchemy import func
 
 from finapi.sentiment import analyze_sentiment, analyze_batch
 from finapi.db import SessionLocal, init_db
@@ -117,6 +118,8 @@ def create_app() -> Flask:
                     "title": r.title,
                     "publisher": r.publisher,
                     "url": r.url,
+                    "sentiment_label": r.sentiment_label,
+                    "sentiment_score": r.sentiment_score,
                 }
                 for r in rows
             ],
@@ -172,6 +175,28 @@ def create_app() -> Flask:
             "count": len(results),
             "results": results,
         }), 200
+
+    @app.get("/db/sentiment-summary/<ticker>")
+    def sentiment_summary(ticker: str):
+        with SessionLocal() as session:
+            rows = (
+                session.query(
+                    NewsItem.sentiment_label,
+                    func.count(NewsItem.id)
+                )
+                .filter(NewsItem.ticker == ticker.upper())
+                .filter(NewsItem.sentiment_label.isnot(None))
+                .group_by(NewsItem.sentiment_label)
+                .all()
+            )
+
+        return jsonify({
+            "ticker": ticker.upper(),
+            "summary": {
+                label: count
+                for label, count in rows
+            },
+        })
 
     return app
 
