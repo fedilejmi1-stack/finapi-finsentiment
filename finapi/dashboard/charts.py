@@ -47,9 +47,7 @@ def sentiment_pie_chart(distribution: dict[str, int]) -> go.Figure:
     if not distribution:
         return go.Figure()
 
-    df = pd.DataFrame(
-        [{"label": label, "count": count} for label, count in distribution.items()]
-    )
+    df = pd.DataFrame([{"label": label, "count": count} for label, count in distribution.items()])
 
     fig = px.pie(
         df,

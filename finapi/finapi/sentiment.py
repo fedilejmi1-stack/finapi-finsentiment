@@ -36,5 +36,5 @@ def analyze_batch(texts: list[str]) -> list[dict]:
             "score": round(float(result["score"]), 4),
             "text_preview": text[:80],
         }
-        for text, result in zip(clean_texts, results)
+        for text, result in zip(clean_texts, results, strict=False)
     ]

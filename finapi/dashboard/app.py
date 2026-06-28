@@ -2,11 +2,9 @@
 
 from datetime import datetime
 
-import streamlit as st
-
 import api_client as api
+import streamlit as st
 from charts import SENT_COLORS, price_line_chart, sentiment_pie_chart
-
 
 st.set_page_config(
     page_title="FinSentiment Dashboard",

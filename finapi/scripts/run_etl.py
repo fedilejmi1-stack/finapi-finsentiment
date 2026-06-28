@@ -8,8 +8,8 @@ import logging
 import sys
 
 from finapi.db import init_db
-from finapi.etl.prices_etl import ingest_prices
 from finapi.etl.news_etl import ingest_news
+from finapi.etl.prices_etl import ingest_prices
 
 
 def main(tickers: list[str]) -> None:
