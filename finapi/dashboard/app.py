@@ -1,5 +1,6 @@
 """Interactive financial sentiment dashboard."""
 
+import os
 from datetime import datetime
 
 import api_client as api
@@ -17,6 +18,8 @@ with st.sidebar:
     st.title("Controls")
     st.caption("Configure your dashboard view.")
 
+    page = st.radio("Page", ["Dashboard", "About"])
+
     api_ok = api.get_health()
 
     if api_ok:
@@ -26,14 +29,46 @@ with st.sidebar:
         st.info("Start Flask in another terminal: python -m finapi.app")
         st.stop()
 
-    ticker = st.selectbox(
-        "Ticker",
-        ["AAPL", "MSFT", "GOOGL"],
-    )
+    default_tickers = [
+        ticker.strip().upper()
+        for ticker in os.getenv("TICKERS", "AAPL,MSFT,GOOGL,TSLA").split(",")
+        if ticker.strip()
+    ]
+
+    db_tickers = api.get_db_stats().get("tickers", [])
+    ticker_options = db_tickers or default_tickers
+
+    ticker = st.selectbox("Ticker", ticker_options)
 
     if st.button("Refresh now"):
         st.cache_data.clear()
         st.rerun()
+
+
+if page == "About":
+    st.title("About FinSentiment")
+    st.markdown(
+        """
+        FinSentiment is a financial sentiment dashboard built across six applied labs.
+
+        It combines:
+
+        - Flask API backend
+        - SQLite database
+        - yfinance ETL pipeline
+        - FinBERT sentiment analysis
+        - Streamlit dashboard
+        - Pytest, coverage, Ruff, and GitHub Actions CI
+        - Public deployment on Hugging Face Spaces
+
+        **GitHub repository:**  
+        https://github.com/fedilejmi1-stack/finapi-finsentiment
+
+        **Public Hugging Face Space:**  
+        https://huggingface.co/spaces/FediLejmi1/finsentiment
+        """
+    )
+    st.stop()
 
 
 st.title(f"📈 FinSentiment - {ticker}")
@@ -41,17 +76,20 @@ st.caption("Interactive dashboard: prices, financial news, and FinBERT sentiment
 
 
 @st.cache_data(ttl=60)
-def load_prices(t: str):
+def load_prices(t: str) -> list[dict]:
+    """Load stored prices for a ticker."""
     return api.get_db_prices(t)
 
 
 @st.cache_data(ttl=60)
-def load_news(t: str):
+def load_news(t: str) -> list[dict]:
+    """Load stored news for a ticker."""
     return api.get_db_news(t)
 
 
 @st.cache_data(ttl=60)
-def load_summary(t: str):
+def load_summary(t: str) -> dict[str, int]:
+    """Load sentiment summary for a ticker."""
     return api.get_sentiment_summary(t)
 
 
@@ -89,6 +127,7 @@ with chart_col:
 
 with sentiment_col:
     st.subheader("Sentiment distribution")
+
     if sentiment:
         st.plotly_chart(sentiment_pie_chart(sentiment), use_container_width=True)
     else:
