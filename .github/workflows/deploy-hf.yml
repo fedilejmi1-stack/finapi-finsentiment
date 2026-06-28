@@ -13,6 +13,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check HF token
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "HF_TOKEN is empty or missing"
+            exit 1
+          fi
+          echo "HF_TOKEN is available"
+
       - name: Configure Git
         run: |
           git config user.email "ci@finapi.dev"
@@ -26,4 +36,4 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git push --force https://FediLejmi1:${HF_TOKEN}@huggingface.co/spaces/FediLejmi1/finsentiment hf-deploy:main
+          git push --force https://oauth2:${HF_TOKEN}@huggingface.co/spaces/FediLejmi1/finsentiment hf-deploy:main
