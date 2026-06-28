@@ -1,6 +1,7 @@
 # FinAPI
+![CI](https://github.com/fedilejmi1-stack/finapi-finsentiment/actions/workflows/ci.yml/badge.svg)
 
-A Flask-based financial API that provides stock prices, historical data, news ingestion, and AI-powered sentiment analysis using FinBERT.
+A Flask-based financial API that provides stock prices, historical data, news ingestion, AI-powered sentiment analysis using FinBERT, and an interactive Streamlit dashboard.
 
 ---
 
@@ -28,6 +29,16 @@ A Flask-based financial API that provides stock prices, historical data, news in
 * Sentiment summary endpoint
 * Singleton model loading using `lru_cache`
 
+### Lab 4
+
+* Interactive Streamlit dashboard
+* Sidebar ticker selector
+* Price metrics
+* Plotly price chart
+* Sentiment distribution chart
+* Colored news list by sentiment
+* Cached API calls using `@st.cache_data`
+
 ---
 
 # Installation
@@ -47,7 +58,7 @@ python -m venv .venv
 
 Activate it.
 
-Windows (Git Bash):
+Windows Git Bash:
 
 ```bash
 source .venv/Scripts/activate
@@ -85,7 +96,9 @@ PYTHONPATH=. python scripts/enrich_sentiment.py
 
 ---
 
-# Run the API
+# Run the Flask API
+
+Run the API from the project root:
 
 ```bash
 python -m finapi.app
@@ -93,8 +106,36 @@ python -m finapi.app
 
 The API is available at:
 
-```
+```text
 http://127.0.0.1:5000
+```
+
+---
+
+# Run the Streamlit Dashboard
+
+The Flask API must be running before launching the dashboard.
+
+## Terminal 1 — Start the Flask API
+
+```bash
+cd finapi
+source .venv/Scripts/activate
+python -m finapi.app
+```
+
+## Terminal 2 — Start the Streamlit dashboard
+
+```bash
+cd finapi
+source .venv/Scripts/activate
+streamlit run dashboard/app.py
+```
+
+The dashboard is available at:
+
+```text
+http://localhost:8501
 ```
 
 ---
@@ -103,7 +144,7 @@ http://127.0.0.1:5000
 
 ## Health
 
-```
+```text
 GET /health
 ```
 
@@ -111,13 +152,13 @@ GET /health
 
 ## Latest Price
 
-```
+```text
 GET /price/<ticker>
 ```
 
 Example:
 
-```
+```text
 GET /price/AAPL
 ```
 
@@ -125,13 +166,13 @@ GET /price/AAPL
 
 ## Historical Prices
 
-```
+```text
 GET /history/<ticker>?days=30
 ```
 
 Example:
 
-```
+```text
 GET /history/AAPL?days=30
 ```
 
@@ -139,13 +180,13 @@ GET /history/AAPL?days=30
 
 ## Prices Stored in Database
 
-```
+```text
 GET /db/prices/<ticker>
 ```
 
 Example:
 
-```
+```text
 GET /db/prices/AAPL
 ```
 
@@ -153,13 +194,13 @@ GET /db/prices/AAPL
 
 ## News Stored in Database
 
-```
+```text
 GET /db/news/<ticker>
 ```
 
 Example:
 
-```
+```text
 GET /db/news/AAPL
 ```
 
@@ -167,7 +208,7 @@ GET /db/news/AAPL
 
 ## Sentiment Analysis
 
-```
+```text
 POST /sentiment
 ```
 
@@ -183,7 +224,7 @@ Example body:
 
 ## Batch Sentiment Analysis
 
-```
+```text
 POST /sentiment/batch
 ```
 
@@ -203,13 +244,13 @@ Example body:
 
 ## Sentiment Summary
 
-```
+```text
 GET /db/sentiment-summary/<ticker>
 ```
 
 Example:
 
-```
+```text
 GET /db/sentiment-summary/AAPL
 ```
 
@@ -226,7 +267,41 @@ Example response:
 }
 ```
 
-(The exact numbers depend on the news currently available from Yahoo Finance.)
+The exact numbers depend on the news currently available from Yahoo Finance and the articles stored in the database.
+
+---
+
+# Dashboard Features
+
+The Streamlit dashboard includes:
+
+* A sidebar to select the ticker
+* Four main metrics:
+
+  * Last close
+  * Date
+  * Stored news
+  * Positive sentiment percentage
+* An interactive Plotly line chart for price evolution
+* A sentiment distribution pie chart
+* A colored list of latest news by sentiment
+* Cached API calls using `@st.cache_data`
+
+---
+
+# Screenshots
+
+Dashboard screenshots should be saved in:
+
+```text
+docs/screenshots/
+```
+
+Example:
+
+```text
+docs/screenshots/lab4_dashboard.png
+```
 
 ---
 
@@ -238,31 +313,66 @@ Example response:
 * SQLite
 * yfinance
 * Transformers
-* FinBERT (ProsusAI/finbert)
+* FinBERT `ProsusAI/finbert`
+* Streamlit
+* Plotly
+* Requests
 
 ---
 
 # Project Structure
 
-```
+```text
 finapi/
 │
 ├── data/
 │   └── finapi.db
 │
+├── dashboard/
+│   ├── __init__.py
+│   ├── app.py
+│   ├── api_client.py
+│   └── charts.py
+│
+├── docs/
+│   └── screenshots/
+│       └── lab4_dashboard.png
+│
 ├── finapi/
+│   ├── __init__.py
 │   ├── app.py
 │   ├── db.py
 │   ├── models.py
 │   ├── prices.py
 │   ├── sentiment.py
 │   └── etl/
+│       ├── __init__.py
+│       ├── prices_etl.py
+│       └── news_etl.py
 │
 ├── scripts/
 │   ├── run_etl.py
 │   └── enrich_sentiment.py
 │
 ├── tests/
+│   └── test_app.py
+│
 ├── requirements.txt
 └── README.md
+```
+
+---
+
+# Git History
+
+The project is organized by lab commits:
+
+```text
+Lab 0: setup verification
+Lab 1: API Flask pour cours boursiers
+Lab 2: SQLite database and ETL pipeline
+Lab 2: SQLite database, ETL and DB endpoints
+Lab 3: FinBERT sentiment analysis
+Lab 3: FinBERT sentiment analysis and news enrichment
+Lab 4: add Streamlit dashboard
 ```
