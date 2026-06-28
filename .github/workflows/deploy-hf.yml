@@ -1,0 +1,29 @@
+name: Deploy to Hugging Face Spaces
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.email "ci@finapi.dev"
+          git config user.name "GitHub Actions"
+
+      - name: Create Space branch from finapi folder
+        run: |
+          git subtree split --prefix=finapi -b hf-deploy
+
+      - name: Push to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git push --force https://FediLejmi1:${HF_TOKEN}@huggingface.co/spaces/FediLejmi1/finsentiment hf-deploy:main
